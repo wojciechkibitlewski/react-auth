@@ -9,6 +9,9 @@ const corsOptions = require('./config/corsOptions');
 const { logger } = require('./middleware/logEvents');
 const errorHandler = require('./middleware/errorHandler');
 const connectDb = require('./config/dbConnect');
+const verifyJWT = require('./middleware/verifyJWT');
+const cookieParser = require('cookie-parser');
+const credentials = require('./middleware/credentials');
 
 connectDb();
 
@@ -16,17 +19,24 @@ const PORT = process.env.PORT || 3500;
 
 const app = express();
 app.use( logger );
+app.use(credentials);
 app.use(cors(corsOptions));
 app.use(express.urlencoded( { extended: false }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/', express.static(path.join(__dirname, 'public')));
 app.use('/', require('./routers/root'));
 
-app.use('/users', require('./routers/api/userRouters'));
 app.use('/register', require('./routers/api/registerRouters'));
 app.use('/auth', require('./routers/api/authRouters'));
+app.use('/refresh', require('./routers/api/refreshRouters'));
+app.use('/logout', require('./routers/api/logoutRouters'));
 
+app.use(verifyJWT);
+    app.use('/users', require('./routers/api/userRouters'));
+
+    
 app.all('*', (req,res) => {
     res.status(404)
     if(req.accepts('html')) {

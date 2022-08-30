@@ -21,6 +21,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { styled } from '@mui/material/styles';
 
 import { polish as lang } from '../../lang/language';
+import { display } from '@mui/system';
 
 const BoxMain = styled(Paper)(({ theme }) => ({
     backgroundColor: '#fff',
@@ -85,7 +86,28 @@ const Login = () => {
       setPwdError(lang.pwdErrorText);
       return;
     }
-   
+    
+    try {
+      const response = await fetch('http://localhost:3500/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({email, pwd})
+      });
+      if(!response.ok) {
+        if(response.status === 401) {
+          return await sendRefreshToken();
+        }
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+      return await response.json();
+
+    } catch (error) {
+      console.log(error.stack());
+      displayErr();
+    }
+
+
     const data = new FormData(event.currentTarget);
     console.log({
       email: data.get('email'),
